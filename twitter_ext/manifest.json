@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Twitter Link Extractor",
+  "version": "1.2",
+  "description": "Extracting images source by TweetDetails request",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page.js"],
+      "matches": ["https://x.com/*"]
+    }
+  ],
+  "permissions": ["downloads","scripting", "webRequest"],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twimg.com/*"
+  ]
+}
