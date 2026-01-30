@@ -86,13 +86,17 @@
             align-items: flex-end;
             flex-wrap: nowrap;
         }
-        .image-preview{
+        .media-preview{
             background: #181818;
             max-width: 100%;
             max-height: 100%;
             position: absolute;
         }
-        .image-preview-image{
+        .media-preview-image{
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .media-preview-video{
             max-width: 100%;
             max-height: 100%;
         }
@@ -112,8 +116,10 @@
         <button id="button_open_all">Открыть все</button>
         <button id="button_download_all">Скачать все</button>
     </div>
-    <div id="image_preview" class="image-preview">
-        <img src="" id="image_preview_image" class="image-preview-image"/>
+    <div id="media_preview" class="media-preview" style="display: none">
+        <img src="" id="media_preview_image" class="media-preview-image" style="display: none"/>
+        <video src="" id="media_preview_video" class="media-preview-video" style="display: none" autoplay loop controls>
+        </video>
     </div>
 </body>
 </html>

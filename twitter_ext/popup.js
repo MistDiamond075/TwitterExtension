@@ -1,5 +1,4 @@
-let ptrOverLink=false;
-let ptrOverImagePreview=false;
+let ptrOverMediaPreview=false;
 let imagePreview;
 let defaultHeight=150;
 let defaultWidth=300;
@@ -47,10 +46,38 @@ chrome.runtime.sendMessage({type: "getData"}, response => {
                                 console.log("media:\n",media);
                                 if(media.length>0){
                                     media.forEach(m =>{
-                                        const media_url_https=m.media_url_https;
-                                        const expanded_url=m.expanded_url;
+                                        let media_url_https=m.media_url_https;
+                                        let expanded_url=m.expanded_url;
+                                        const type=m.type;
+                                        if(type==="video") {
+                                            const videoInfo = m.video_info;
+                                            if (videoInfo) {
+                                                const variants = videoInfo.variants;
+                                                let maxBitrate = 0;
+                                                let finalUrl = null;
+                                                variants.forEach(variant => {
+                                                    try {
+                                                        const bit = parseInt(variant.bitrate);
+                                                        const type = variant.content_type;
+                                                        const url = variant.url;
+                                                        if (type.includes('video/') && maxBitrate < bit) {
+                                                            finalUrl = url;
+                                                        }
+                                                    } catch (e) {
+                                                    }
+                                                });
+                                                if (finalUrl) {
+                                                    media_url_https = finalUrl;
+                                                }
+                                            }
+                                        }
                                         if(media_url_https && expanded_url){
-                                            urls.push({expanded_url,media_url_https});
+                                            const url={
+                                                "expanded_url":expanded_url,
+                                                "media_url_https":media_url_https,
+                                                "type":type
+                                            };
+                                            urls.push(url);
                                         }
                                     });
                                 }
@@ -69,34 +96,38 @@ chrome.runtime.sendMessage({type: "getData"}, response => {
     let iterator=1;
     if(urls.length>0){
         const first=urls[0];
-        console.log("first:\n",first);
+      //  console.log("first:\n",first);
         if(first){
             const expanded=first.expanded_url;
-            console.log("expanded:\n",expanded)
+          //  console.log("expanded:\n",expanded)
             if(expanded){
                 const tweetLink=document.getElementById("tweet_link");
                 if(tweetLink) {
                     tweetLink.href = expanded.replace(/\/photo\/\d+/, "");
-                    tweetLink.innerText=expanded.replace(/\/photo\/\d+/, "").replace("https://x.com/","");
+                    tweetLink.innerText=expanded.replace(/\/photo\/\d+/, "").replace(/\/video\/\d+/, "").replace("https://x.com/","");
                 }
             }
         }
     }
     urls.forEach(u =>{
         if(linksList){
+            console.log(u);
             const div=document.createElement('div');
             div.className='link-container';
             linksList.appendChild(div);
             const link=document.createElement('a');
             link.id="link_"+iterator;
-            link.href=u.media_url_https+'?'+new URLSearchParams({format:'jpg',name:'large'});
-            link.innerText='Image '+iterator;
+            link.href=u.media_url_https + (u.type==='photo' ?
+                ('?'+new URLSearchParams({format:'jpg',name:'large'})) :
+                '');
+            link.innerText=(u.type==="video" ? 'Video' : 'Image ')+iterator;
                 /*(u.expanded_url.toString().includes('photo') ?
                 u.expanded_url.toString().substring(u.expanded_url.toString().indexOf('photo')) :
                 u.expanded_url
             );*/
             link.setAttribute('target','_blank');
             link.setAttribute('rel','noopener noreferrer');
+            link.dataset.type=u.type;
             const button=document.createElement('button');
             button.id="button_download_"+iterator;
             button.innerText="Скачать";
@@ -106,31 +137,54 @@ chrome.runtime.sendMessage({type: "getData"}, response => {
             div.appendChild(link);
             div.appendChild(button);
             link.addEventListener("mouseenter", (event)=>{
-                addImageToImagePreview(event.target);
+                showMediaPreviewContainer(event.currentTarget);
             });
-            link.addEventListener("mouseleave", (event)=>{
-                removeImageFromImagePreview();
-            });
+            link.addEventListener("mouseleave", hideMediaPreviewContainer);
             iterator++;
         }
     });
 });
 
-function addImageToImagePreview(el){
-    const rect = el.getBoundingClientRect();
-    console.log(el);
-    imagePreview.style.display='block';
-    imagePreview.style.top = rect.bottom + window.scrollY + 'px';
-    imagePreview.style.left = rect.left + window.scrollX + 'px';
-    imagePreview.getElementsByClassName("image-preview-image")[0].src=el.href;
-    document.body.style.height='500px';
-   // console.log(imagePreview.getElementsByClassName("image-preview-image")[0].src);
+function addMediaToPreview(el){
+    console.log(el,el instanceof Element);
+    if(el instanceof Element) {
+        removeMediaFromPreview();
+        const rect = el.getBoundingClientRect();
+        imagePreview.style.top = rect.bottom + window.scrollY + 'px';
+        imagePreview.style.left = rect.left + window.scrollX + 'px';
+        const container = imagePreview.querySelector(el.dataset.type === "photo" ? "img" : "video");
+        container.src = el.href
+        container.style.display = '';
+        document.body.style.height = '500px';
+    }
 }
 
-function removeImageFromImagePreview(){
-    imagePreview.style.display='none';
-    imagePreview.getElementsByClassName("image-preview-image").src='';
-    document.body.style.height=defaultHeight+'px';
+function hideMediaPreviewContainer(){
+    ptrOverMediaPreview=false;
+    setTimeout(() =>{
+        if(!ptrOverMediaPreview) {
+            imagePreview.style.display = 'none';
+            removeMediaFromPreview();
+            document.body.style.height = defaultHeight + 'px';
+        }
+    },70);
+}
+
+function showMediaPreviewContainer(content=null){
+    imagePreview.style.display='flex';
+    ptrOverMediaPreview=true;
+    if(content) {
+        addMediaToPreview(content);
+    }
+}
+
+function removeMediaFromPreview(){
+    const containers=imagePreview.querySelectorAll("[class^='media-preview']");
+    containers.forEach(c => {
+        c.src = '';
+        c.style.display='none';
+    });
+    imagePreview.querySelectorAll("video").forEach(v => v.pause());
 }
 
 function getAllLinks(){
@@ -176,6 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("button_download_all").addEventListener('click',()=>{
         downloadFromAllLinks();
     });
-    imagePreview=document.getElementById('image_preview');
+    imagePreview=document.getElementById('media_preview');
+    imagePreview.addEventListener('mouseenter',showMediaPreviewContainer);
+    imagePreview.addEventListener('mouseleave',hideMediaPreviewContainer);
 });
 

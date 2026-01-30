@@ -1,5 +1,5 @@
 (() => {
-    const log = (...a) => console.log("[EXT]", ...a);
+    //const log = (...a) => console.log("[EXT]", ...a);
 
     const origOpen = XMLHttpRequest.prototype.open;
     const origSend = XMLHttpRequest.prototype.send;
@@ -21,12 +21,12 @@
                 }
                // log("XHR RESPONSE:", this._url, this.responseText);
             } catch (e) {
-                log("XHR ERROR reading body:", this._url, e);
+               // log("XHR ERROR reading body:", this._url, e);
             }
         });
         return origSend.apply(this, arguments);
     };
 
 
-    log("PATCHED: fetch + XHR");
+    //log("PATCHED: fetch + XHR");
 })();

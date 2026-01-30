@@ -53,7 +53,7 @@ function blobToBase64(blob) {
 function parseFilename(url){
     let name=url.split("/").pop().split("?")[0];
     if(!name){
-        name="image.jpg";
+        name="file";
     }
     return name;
 }
