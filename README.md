@@ -1,6 +1,6 @@
 # RU:
 
-Расширение для твиттера, позволяющее просматривать и скачивать любые изображения (в будущем будет добавлена поддержка видео).
+Расширение для твиттера, позволяющее просматривать и скачивать любые изображения.
 
 _Установка_:
 1. Открыть настройки расширений вашего браузера
@@ -16,7 +16,7 @@ P.S. расширение делалось под мои требования, �
 
 # EN:
 
-A Twitter extension that allows you to view and download any images (video support will be added in the future).
+A Twitter extension that allows you to view and download any images.
 
 _Installation_:
 1. Open your browser's extension settings.
